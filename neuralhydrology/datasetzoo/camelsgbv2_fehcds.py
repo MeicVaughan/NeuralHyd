@@ -8,13 +8,21 @@ from neuralhydrology.datasetzoo.basedataset import BaseDataset
 from neuralhydrology.utils.config import Config
 
 
-class CamelsGBv2_NRFAPFv15(BaseDataset):
-    """Data set class for the CAMELS GB v2 dataset by [1] but with static attributes taken from the UK National River
-    Flow Archive Peak Flows data set v15-0-2 [2]. Requires the NRFA Peak Flows attributes to have been combined into 
-    a single, suitably structured csv file as a preprocessing step before to being loaded here.
+class CamelsGBv2_FEHCDs(BaseDataset):
+    """Data set class for the CAMELS-GB v2 dataset by [1] but with static attributes loaded from a suitably structured
+    csv file - NOT from the CAMELS-GB v2 files. The aim of this approach is to enable use of the FEH Catchment Descriptors,
+    (https://nrfa.ceh.ac.uk/data/about-data/catchment-information/feh-catchment-descriptors) but it should work with any
+    static attributes stored in a suitably structured csv file.
     
-    This file created from the Neural Hydrology Template class file for adding a new data set by Mike Vaughan.
+    Initial work and testing has focussed on the FEH Catchment Descriptors provided with the UK National River Flow
+    Archive Peak Flows data set v15-0-2 [2] which have previously been preprocessed into a suitably structured csv file.
+    The intention, however, is that the csv file can be manually edited to include additional stations and / or replaced
+    entirely as updated versions of the Peak Flows dataset are released. 
     
+    This module was originally created by Mike Vaughan from the Neural Hydrology Template class file for adding a new data set.
+    
+    Original Neural Hydrology text:
+
     Each dataset class has to derive from `BaseDataset`, which implements most of the logic for preprocessing data and 
     preparing data for model training. Only two methods have to be implemented for each specific dataset class: 
     `_load_basin_data()`, which loads the time series data for a single basin, and `_load_attributes()`, which loads 
@@ -72,7 +80,7 @@ class CamelsGBv2_NRFAPFv15(BaseDataset):
                  id_to_int: Dict[str, int] = {},
                  scaler: Dict[str, Union[pd.Series, xarray.DataArray]] = {}):
         # initialize parent class
-        super(CamelsGBv2_NRFAPFv15, self).__init__(cfg=cfg,
+        super(CamelsGBv2_FEHCDs, self).__init__(cfg=cfg,
                                               is_train=is_train,
                                               period=period,
                                               basin=basin,
@@ -114,8 +122,8 @@ class CamelsGBv2_NRFAPFv15(BaseDataset):
 
         # New code
         # Temporary hard coding to get something working
-        attrs_file = Path("/Volumes/prd_dash_lab/flood_forecasting_unrestricted/shared_external_volume/NRFAPeakFlow_v15-0-2/Processed/NRFAPeakFlow_catchment_descriptors.csv") 
-        return load_nrfapfv15_attributes(attrs_file, basins=self.basins)
+        attributes_file = Path("/Volumes/prd_dash_lab/flood_forecasting_unrestricted/shared_external_volume/NRFAPeakFlow_v15-0-2/Processed/NRFAPeakFlow_catchment_descriptors.csv") 
+        return load_fehcds(attributes_file, basins=self.basins)
 
 
 def load_camels_gb_v2_timeseries(data_dir: Path, basin: str) -> pd.DataFrame:
@@ -151,13 +159,13 @@ def load_camels_gb_v2_timeseries(data_dir: Path, basin: str) -> pd.DataFrame:
 
     return df
 
-def load_nrfapfv15_attributes(attrs_file: Path, basins: List[str] = []) -> pd.DataFrame:
-    """Load NRFA Peak Flows v15 attributes from a preprocessed csv file
+def load_fehcds(attributes_file: Path, basins: List[str] = []) -> pd.DataFrame:
+    """Load FEH Catchment Descriptors from a suitably preprocessed csv file
 
     Parameters
     ----------
-    attrs_file : Path
-        Path and filename of the NRFA PF csv file    
+    attributes_file : Path
+        Path, including filename, of the csv file containing the FEH CDs    
     basins : List[str], optional
         If passed, return only attributes for the basins specified in this list. Otherwise, the attributes of all basins
         are returned.
@@ -170,30 +178,15 @@ def load_nrfapfv15_attributes(attrs_file: Path, basins: List[str] = []) -> pd.Da
     Raises
     ------
     FileNotFoundError
-        If no subfolder called 'attributes' exists within the root directory of the CAMELS GB data set.
+        If no file is found at the attributes_file Path.
 
     """
 
-    """ Code from CAMELS GB not required:
-    attributes_path = data_dir / 'attributes'
+    if not attributes_file.exists():
+        raise FileNotFoundError(f"Attribute file not found at {attributes_file}")
 
-    if not attributes_path.exists():
-        raise FileNotFoundError(f"Attribute folder not found at {attributes_path}")
-
-    txt_files = attributes_path.glob('*_attributes.csv')
-
-     Read-in attributes into one big dataframe
-    dfs = []
-    for txt_file in txt_files:
-        df_temp = pd.read_csv(txt_file, sep=',', header=0, dtype={'gauge_id': str})
-        df_temp = df_temp.set_index('gauge_id')
-
-        dfs.append(df_temp)
-
-    df = pd.concat(dfs, axis=1)
-    """
     # Add read statement here
-    df = pd.read_csv(attrs_file)
+    df = pd.read_csv(attributes_file, index_col='station_number', dtype={'station_number': str})
 
     if basins:
         if any(b not in df.index for b in basins):
