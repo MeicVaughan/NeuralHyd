@@ -9,7 +9,7 @@ from neuralhydrology.utils.config import Config
 
 
 class CamelsGBv2_FEHCDs(BaseDataset):
-    """Data set class for the CAMELS-GB v2 dataset by [1] but with static attributes loaded from a suitably structured
+    """Data set class for the CAMELS-GB v2 daily data by [1] but with static attributes loaded from a suitably structured
     csv file - NOT from the CAMELS-GB v2 files. The aim of this approach is to enable use of the FEH Catchment Descriptors,
     (https://nrfa.ceh.ac.uk/data/about-data/catchment-information/feh-catchment-descriptors) but it should work with any
     static attributes stored in a suitably structured csv file.
@@ -19,7 +19,8 @@ class CamelsGBv2_FEHCDs(BaseDataset):
     The intention, however, is that the csv file can be manually edited to include additional stations and / or replaced
     entirely as updated versions of the Peak Flows dataset are released. 
     
-    This module was originally created by Mike Vaughan from the Neural Hydrology Template class file for adding a new data set.
+    This module was originally created from the Neural Hydrology Template class file for adding a new data set with some
+    code copied from 'camelsgb.py'.
     
     Original Neural Hydrology text:
 
@@ -118,11 +119,11 @@ class CamelsGBv2_FEHCDs(BaseDataset):
         pd.DataFrame
             Basin-indexed DataFrame, containing the attributes as columns.
         """
-        # return load_camels_gb_attributes(self.cfg.data_dir, basins=self.basins)
-
         # New code
-        # Temporary hard coding to get something working
-        attributes_file = Path("/Volumes/prd_dash_lab/flood_forecasting_unrestricted/shared_external_volume/NRFAPeakFlow_v15-0-2/Processed/NRFAPeakFlow_catchment_descriptors.csv") 
+        attributes_file = (
+            self.cfg.static_attributes_dir
+            / self.cfg.static_attributes_file
+        )
         return load_fehcds(attributes_file, basins=self.basins)
 
 

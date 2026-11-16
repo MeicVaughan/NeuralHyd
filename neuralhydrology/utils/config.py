@@ -33,6 +33,9 @@ class Config(object):
         the config file or dict contain unrecognized keys.
     """
 
+    # Added new config keys static_attributes_dir and static_attributes_file to allow the static attributes to be read
+    # from a separate file for use with the camels_gb_v2_fehcds dataset
+
     # Lists of deprecated config keys and purely informational metadata keys, needed when checking for unrecognized
     # config keys since these keys are not properties of the Config class.
     _deprecated_keys = [
@@ -315,6 +318,14 @@ class Config(object):
     @property
     def data_dir(self) -> Path:
         return self._get_value_verbose("data_dir")
+
+    @property
+    def static_attributes_dir(self) -> Path:
+        return self._cfg.get("static_attributes_dir", None)
+
+    @property
+    def static_attributes_file(self) -> Path:
+        return self._cfg.get("static_attributes_file", None)
 
     @property
     def dataset(self) -> str:
